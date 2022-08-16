@@ -1,4 +1,7 @@
-from brownie import accounts
+import pytest
+
+from brownie import Token, accounts
+
 
 def test_account_balance():
     balance = accounts[0].balance()

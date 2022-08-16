@@ -5,3 +5,13 @@ __pycache__
 build/
 reports/
 env
+issue.txt
+<<<<<<< HEAD
+<<<<<<< HEAD
+node_modules/
+=======
+node_modules/
+>>>>>>> 6bb7b1b1fe56efff8bc539e0489fc07b64ed3578
+=======
+node_modules/
+>>>>>>> 6bb7b1b1fe56efff8bc539e0489fc07b64ed3578
