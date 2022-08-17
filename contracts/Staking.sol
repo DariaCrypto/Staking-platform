@@ -36,6 +36,16 @@ contract Staking {
         stakingParametrs.procent = procent_;
     }
 
+    function infoStake() external returns (StakingParametrs memory) {
+        return (
+            StakingParametrs(
+                stakingParametrs.claimTime,
+                stakingParametrs.unstakeTime,
+                stakingParametrs.procent
+            )
+        );
+    }
+
     function stake(uint256 amount) external {
         if (IUniswapV2ERC20(liquidity).balanceOf(msg.sender) < 1)
             revert MinimalAmount();
