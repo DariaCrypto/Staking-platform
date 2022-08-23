@@ -1,6 +1,6 @@
 import pytest
-
-from brownie import AToken, BToken, RewardToken, Staking, StakeToken, accounts
+import brownie
+from brownie import StakeToken, RewardToken, Pool, accounts, chain
 
 CLAIM_TIME = 600
 UNSTAKE_TIME = 1200
@@ -8,30 +8,29 @@ UNSTAKE_TIME = 1200
 
 @pytest.fixture
 def stakeToken():
-    return accounts[0].deploy(StakeToken)
-
-
-@pytest.fixture
-def aToken():
-    return accounts[0].deploy(AToken, accounts[0], 100e18)
-
-
-@pytest.fixture
-def bToken():
-    return accounts[0].deploy(BToken, accounts[0], 100e18)
+    return accounts[0].deploy(StakeToken, accounts[0], 100e18)
 
 
 @pytest.fixture
 def rewardToken():
-    return accounts[0].deploy(RewardToken, accounts[0], 100e18)
+    return accounts[0].deploy(RewardToken)
 
 
 @pytest.fixture
-def staking(bToken, rewardToken):
-    return accounts[0].deploy(Staking, bToken.address, rewardToken.address,
+def pool(stakeToken, rewardToken):
+    return accounts[0].deploy(Pool, stakeToken.address, rewardToken.address,
                               CLAIM_TIME, UNSTAKE_TIME, 30)
 
 
-def test_staking_info(staking):
-    infoStake = staking.infoStake.call({'from': accounts[0]})
-    assert infoStake == (CLAIM_TIME, UNSTAKE_TIME, 30)
+def test_staking_info(pool):
+    infoPool = pool.getInfoPool.call({'from': accounts[0]})
+    assert infoPool == (CLAIM_TIME, UNSTAKE_TIME, 30)
+
+
+def test_stake(pool, stakeToken):
+    stakeToken.approve(pool.address, 100)
+    with brownie.reverts():
+        pool.stake.call(10, {'from': accounts[1]})
+    pool.stake.call(10, {'from': accounts[0]})
+    stakeInfo = pool.getInfoStake.call({'from': accounts[0]})
+    assert stakeInfo == (10, chain.time)

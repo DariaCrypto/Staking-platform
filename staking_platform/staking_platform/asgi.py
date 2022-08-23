@@ -1,5 +1,5 @@
 """
-ASGI config for exchange_platform project.
+ASGI config for staking_platform project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'exchange_platform.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'staking_platform.settings')
 
 application = get_asgi_application()

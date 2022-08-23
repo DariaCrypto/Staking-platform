@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
-import "interfaces/IUniswapV2ERC20.sol";
 import "OpenZeppelin/openzeppelin-contracts@4.4.2/contracts/token/ERC20/IERC20.sol";
 
-contract Staking {
-    struct StakingParametrs {
+contract Pool {
+    struct PoolParametrs {
         uint256 claimTime;
         uint256 unstakeTime;
         uint8 procent;
@@ -14,69 +13,70 @@ contract Staking {
         uint256 investedAmount;
         uint256 timeInvested;
     }
-    StakingParametrs stakingParametrs;
+    PoolParametrs poolParametrs;
     mapping(address => Stake) internal stakers;
-    address liquidity;
     address rewardToken;
+    address stakeToken;
     error ClaimTime();
     error UnstakeTime();
     error MinimalAmount();
 
     constructor(
-        address liquidity_,
+        address stakeToken_,
         address rewardToken_,
         uint256 claimTime_,
         uint256 unstakeTime_,
         uint8 procent_
     ) {
-        liquidity = liquidity_;
+        stakeToken = stakeToken_;
         rewardToken = rewardToken_;
-        stakingParametrs.claimTime = claimTime_;
-        stakingParametrs.unstakeTime = unstakeTime_;
-        stakingParametrs.procent = procent_;
+        poolParametrs.claimTime = claimTime_;
+        poolParametrs.unstakeTime = unstakeTime_;
+        poolParametrs.procent = procent_;
     }
 
-    function infoStake() external returns (StakingParametrs memory) {
+    function getInfoPool() external returns (PoolParametrs memory) {
         return (
-            StakingParametrs(
-                stakingParametrs.claimTime,
-                stakingParametrs.unstakeTime,
-                stakingParametrs.procent
+            PoolParametrs(
+                poolParametrs.claimTime,
+                poolParametrs.unstakeTime,
+                poolParametrs.procent
             )
         );
     }
 
+    function getInfoStake() external returns (Stake memory) {
+        Stake storage stake = stakers[msg.sender];
+        return (Stake(stake.investedAmount, stake.timeInvested));
+    }
+
     function stake(uint256 amount) external {
-        if (IUniswapV2ERC20(liquidity).balanceOf(msg.sender) < 1)
+        if (IERC20(stakeToken).balanceOf(msg.sender) < 1)
             revert MinimalAmount();
 
-        IUniswapV2ERC20(liquidity).transferFrom(
-            msg.sender,
-            address(this),
-            amount
-        );
+        IERC20(stakeToken).transferFrom(msg.sender, address(this), amount);
         stakers[msg.sender].investedAmount += amount;
+        stakers[msg.sender].timeInvested = block.timestamp;
     }
 
     function claim() external {
-        if (block.timestamp < stakingParametrs.claimTime) revert ClaimTime();
+        if (block.timestamp < poolParametrs.claimTime) revert ClaimTime();
         uint256 rewardAmount = _calcProcent(
             stakers[msg.sender].investedAmount,
-            stakingParametrs.procent
+            poolParametrs.procent
         );
         IERC20(rewardToken).transfer(msg.sender, rewardAmount);
     }
 
     function unstake() external {
-        if (block.timestamp < stakingParametrs.unstakeTime)
-            revert UnstakeTime();
+        if (block.timestamp < poolParametrs.unstakeTime) revert UnstakeTime();
         uint256 rewardAmount = _calcProcent(
             stakers[msg.sender].investedAmount,
-            stakingParametrs.procent
+            poolParametrs.procent
         );
         stakers[msg.sender].investedAmount = 0;
         IERC20(rewardToken).transfer(msg.sender, rewardAmount);
-        IUniswapV2ERC20(liquidity).transfer(
+        IERC20(stakeToken).transfer(
             msg.sender,
             stakers[msg.sender].investedAmount
         );
